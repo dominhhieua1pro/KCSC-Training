@@ -2,7 +2,7 @@
 
 ## SQL injection (SQLi) là gì?
 
-SQL injection (SQLi) là một lỗ hổng bảo mật web cho phép attacker can thiệp vào các truy vấn mà ứng dụng thực hiện trong cơ sở dữ liệu. SQli cho phép attacker xem những dữ liệu mà thông thường không thể truy xuất được như dữ liệu thuộc về người dùng khác, mật khẩu, thông tin thẻ tín dụng, thông tin người dùng cá nhân hoặc bất kỳ dữ liệu nhạy cảm nào mà ứng dụng có thể truy cập được. Trong nhiều trường hợp, attacker có thể sửa đổi hoặc xóa dữ liệu này, gây ra những thay đổi đối với nội dung hoặc hành vi của ứng dụng.
+SQL injection (SQLi) là một lỗ hổng bảo mật web cho phép attacker can thiệp vào câu truy vấn mà ứng dụng thực hiện trong cơ sở dữ liệu. SQLi cho phép attacker xem những dữ liệu mà thông thường không thể truy xuất được như dữ liệu thuộc về người dùng khác, mật khẩu, thông tin thẻ tín dụng, thông tin người dùng cá nhân hoặc bất kỳ dữ liệu nhạy cảm nào mà ứng dụng có thể truy cập được. Trong nhiều trường hợp, attacker có thể sửa đổi hoặc xóa dữ liệu này, gây ra những thay đổi đối với nội dung hoặc hành vi của ứng dụng.
 
 Trong một số trường hợp, attacker có thể leo thang một cuộc tấn công SQL injection để xâm phạm server hoặc cơ sở hạ tầng back-end khác hoặc thực hiện một cuộc tấn công từ chối dịch vụ (DoS).
 
@@ -84,3 +84,8 @@ ResultSet resultSet = statement.executeQuery();
 Truy vấn được tham số hóa có thể được sử dụng cho bất kỳ tình huống nào mà đầu vào không tin cậy xuất hiện dưới dạng dữ liệu trong truy vấn, bao gồm mệnh đề WHERE và giá trị trong câu lệnh INSERT hoặc UPDATE. Chúng không thể được sử dụng để xử lý đầu vào không tin cậy trong các phần khác của truy vấn, chẳng hạn như tên bảng hoặc cột hoặc mệnh đề ORDER BY.
 
 Để một truy vấn được tham số hóa có hiệu quả trong việc ngăn chặn việc SQL injection, chuỗi được sử dụng trong truy vấn phải luôn là một hard-coded constant và không bao giờ được chứa bất kỳ dữ liệu có thể thay đổi nào từ bất kỳ nguồn gốc nào. Không nên cố gắng validate từng param xem dữ liệu có an toàn hay không và tiếp tục sử dụng nối chuỗi trong truy vấn cho các trường hợp được coi là an toàn. Tất cả đều rất dễ mắc lỗi về nguồn gốc có thể có của dữ liệu hoặc những thay đổi trong mã khác vi phạm các sự giả định về dữ liệu là độc hại.
+
+Ngoài ra, có một số cách giúp giảm thiểu thiệt hại khi trang web bị tấn công SQL Injection đó là:
+- Tránh sử dụng tài khoản quản trị như “root” hay “sa” để kết nối ứng dụng web với máy chủ cơ sở dữ liệu. Tốt nhất nên sử dụng tài khoản chỉ có quyền truy cập read - write đơn giản để vào từng cơ sở dữ liệu riêng biệt, trong trường hợp website bị tấn công SQL Injection, phạm vi thiệt hại vẫn nằm trong ranh giới của cơ sở dữ liệu đó.
+- Mã hóa những dữ liệu nhạy cảm trong cơ sở dữ liệu bao gồm mật khẩu, câu hỏi và câu trả lời về bảo mật, dữ liệu tài chính, thông tin y tế và các thông tin khác có ích cho các tác nhân độc hại.
+- Không lưu trữ dữ liệu nhạy cảm nếu không cần thiết, trừ khi thực sự cần. Và sau đó, xóa thông tin khi không còn sử dụng.
