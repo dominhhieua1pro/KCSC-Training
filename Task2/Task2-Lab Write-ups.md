@@ -2,11 +2,15 @@
 
 ## Index
 
-[PHP - Loose Comparison]()
+[PHP - Loose Comparison](#php---loose-comparison)
 
-[PHP - type juggling]()
+[PHP - type juggling](#php---type-juggling)
 
-[]()
+[PHP - Eval](#php---eval)
+
+[Level 17 - websec](#level-17---websec)
+
+[Level 15 - websec](#level-15---websec)
 
 ### PHP - Loose Comparison 
 
@@ -322,10 +326,176 @@ Cuối cùng cũng nhận được flag. Submit flag: `M!xIng_PHP_w1th_3v4l_L0L`
 ![image](https://user-images.githubusercontent.com/80137840/220170794-24d1811f-2f2e-4f58-8c72-944910258d03.png)
 
 
-### Level Seventeen - websec
+### Level 17 - websec
+
+Truy cập challenge, ta thấy có ô input **Guessed flag** cùng [source code](https://websec.fr/level17/source.php)
 
 ![image](https://user-images.githubusercontent.com/80137840/220172384-6917bdbd-06ab-4276-a4da-e86e3f6e4615.png)
 
+```
+<?php
+include "flag.php";
+
+function sleep_rand() { /* I wish php5 had random_int() */
+        $range = 100000;
+        $bytes = (int) (log($range, 2) / 8) + 1;
+        do {  /* Side effect: more random cpu cycles wasted ;) */
+            $rnd = hexdec(bin2hex(openssl_random_pseudo_bytes($bytes)));
+        } while ($rnd >= $range);
+        usleep($rnd);
+}
+?>
+<!DOCTYPE html>
+<html>
+<head>
+        <title>#WebSec Level Seventeen</title>
+        <link rel="stylesheet" href="../static/bootstrap.min.css" />
+    <meta http-equiv="content-type" content="text/html;charset=UTF-16">
+</head>
+        <body>
+                <div id="main">
+                        <div class="container">
+                                <div class="row">
+                                        <h1>Level Seventeen <small> - Guessing is fun!</small></h1>
+                                </div>
+                                <div class="row">
+                                        <p class="lead">
+                    Can you guess the flag?  You can check the sources <a href="source.php">here</a>.
+                                        </p>
+                                </div>
+                        </div>
+                        <div class="container">
+                            <div class="row">
+                                <form class="form-inline" method='post'>
+                                    <input name='flag' class='form-control' type='text' placeholder='Guessed flag'>
+                                    <input class="form-control btn btn-default" name="submit" value='Go' type='submit'>
+                                </form>
+                            </div>
+                        </div>
+                        <?php
+                        if (isset ($_POST['flag'])):
+                            sleep_rand(); /* This makes timing-attack impractical. */
+                        ?>
+            <br>
+                        <div class="container">
+                            <div class="row">
+                                <?php
+                                if (! strcasecmp ($_POST['flag'], $flag))
+                                    echo '<div class="alert alert-success">Here is your flag: <mark>' . $flag . '</mark>.</div>';   
+                                else
+                                    echo '<div class="alert alert-danger">Invalid flag, sorry.</div>';
+                                ?>
+                            </div>
+                        </div>
+                        <?php endif ?>
+                </div>
+        </body>
+</html>
+```
+
+Trang web yêu cầu nhập vào **Guessed flag** và server kiểm tra nếu chuỗi **Guessed flag** giống hệt với giá trị biến $flag nằm trên server thì hiển thị ra flag. Hàm kiểm tra so sánh chuỗi ở đây là `strcasecmp`. Hàm này thực hiện so sánh nếu 2 chuỗi bằng nhau thì return 0, nếu 2 chuỗi khác nhau thì hàm sẽ so sánh lần lượt từng ký tự giống nhau tương ứng, đến vị trí nào mà 2 ký tự khác nhau thì return giá trị ASCII ký tự chuỗi thứ nhất trừ giá trị ASCII ký tự chuỗi thứ 2.
+
+Lỗi trong bài này ở chỗ trang web không kiểm tra dữ liệu đầu vào **Guessed flag** có phải chuỗi hay không nên ta có thể sử dụng một số trick so sánh đặc biệt như sau:
+
+```
+Nếu một mảng được truyền vào 1 đối số của hàm strcasecmp() thì giá trị NULL được trả về, do đó !strcasecmp() lúc này sẽ trả về 1. Một số ví dụ:
+strcasecmp([], "abcxyz") === NULL => strcasecmp([], "abcxyz") == 0
+strcasecmp(array(), "abcxyz") === NULL => strcasecmp(array(), "abcxyz") == 0
+strcasecmp(['abc'], "abcxyz") === NULL => strcasecmp(['abc'], "abcxyz") == 0
+```
+
+Như vậy, ta chỉ cần khiến cho `$_POST['flag']` nhận giá trị 1 array là bypass được phép kiểm tra `if (! strcasecmp ($_POST['flag'], $flag))`. Tuy nhiên khi gửi payload `flag=[]&submit=Go` thì server trả về `Invalid flag, sorry.` nên ta sẽ gửi payload trong body request như sau: `flag[]=&submit=Go`
+
+![image](https://user-images.githubusercontent.com/80137840/220298753-efc59b25-34e7-4c32-8145-79e6fac70138.png)
+
+Submit flag: `WEBSEC{It_seems_that_php_could_use_a_stricter_typing_system}`
+
+![image](https://user-images.githubusercontent.com/80137840/220300550-ea35ae22-c1a0-4954-a981-65039d5c527a.png)
 
 
+### Level 15 - websec
+
+Truy cập challenge, ta thấy có ô input nhập mã PHP bất kỳ cùng [source code]([https://websec.fr/level17/source.php](https://websec.fr/level15/source.php))
+
+![image](https://user-images.githubusercontent.com/80137840/220300832-c5bf736d-317d-48ee-b2f3-5072833e92ed.png)
+
+```
+<?php
+ini_set('display_errors', 'on');
+ini_set('error_reporting', E_ALL);
+
+$success = '
+<div class="alert alert-success alert-dismissible" role="alert">
+    <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+    Function declared.
+</div>
+';
+
+include "flag.php";
+
+if (isset ($_POST['c']) && !empty ($_POST['c'])) {
+    $fun = create_function('$flag', $_POST['c']);
+    print($success);
+    //fun($flag);
+    if (isset($_POST['q']) && $_POST['q'] == 'checked') {
+        die();
+    }
+}
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <title>#WebSec Level Fifteen</title>
+    <link rel="stylesheet" href="/static/bootstrap.min.css" />
+    <!-- Thanks for kpcyrd for the idea. -->
+</head>
+    <body>
+        <div id="main">
+            <div class="container">
+                    <div class="row">
+                        <h1>LevelFifteen <small>Arbitrary code non-execution</small></h1>
+                    </div>
+                    <div class="row">
+                        <p class="lead">
+                            You can provide us some PHP code, but we won't execute it, <a href="./source.php">check by yourself</a>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="container">
+                    <div class="row">
+                        <form method="post" class="form-inline">
+                            <div class="form-group">
+                                <input type="text" class="form-control" id="c" name="c" placeholder="echo 1337;" required>
+                            </div>
+                            <div class="checkbox">
+                                <label>
+                                    <input type="checkbox" class="form-control" id="q" name="q" value="1"> Exit after declaration
+                                </label>
+                            </div>
+                            <input type="submit" class="form-control btn btn-default" name="submit">
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+    <script src="/static/jquery.js" defer type="text/javascript"></script>
+    <script src="/static/bootstrap.min.js" defer type="text/javascript"></script>
+</html>
+```
+
+Trang web yêu cầu nhập vào đoạn mã PHP và khi gửi lên server sẽ tạo ra 1 function với function name là `$fun` và nội dung là đoạn mã PHP ta nhập vào bởi hàm `create_function()`.
+
+Hàm create_function() cho phép ta tạo các hàm lambda nhưng nó thực hiện bên trong hàm eval() nên không an toàn khi sử dụng. Không những thế, server còn không escape những ký tự đặc biệt nên đây chính là lỗ hổng trong bài này. Cấu trúc hàm lambda như sau: `__lambda_func (<fucntion-params>){<function-code>}`. Thay vì chỉ nhập mỗi đoạn mã PHP, ta sẽ inject thêm ký tự `}` để đánh lừa hàm lambda hiểu rằng đây là ký tự kết thúc hàm và sau đó ta có thể inject thêm bất kỳ mã PHP nào để hàm eval() thực thi. Ví dụ như: `echo $flag;//` (ký tự // để comment đoạn code phía sau)
+
+Như vậy, payload để nhận flag trong bài này như sau: `return $flag;}; echo $flag;//`
+
+![image](https://user-images.githubusercontent.com/80137840/220308413-552e331d-1fd8-4434-8779-d9ce698e87f9.png)
+
+Submit flag: `WEBSEC{HHVM_was_right_about_not_implementing_eval}`
+
+![image](https://user-images.githubusercontent.com/80137840/220308593-616821d2-66cf-47e7-8453-1dea59bfc347.png)
+
+Done!!!
 
